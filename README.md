@@ -1,3 +1,5 @@
+<p align="center"><img src="icon.png" width="128" alt="Clicound Logo"></p>
+
 # Clicound
 
 为 Windows 笔记本触摸板和鼠标的每一次点击添加即时音效反馈。

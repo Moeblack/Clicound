@@ -191,8 +191,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int) {
     wc.lpfnWndProc   = WndProc;
     wc.hInstance     = hInstance;
     wc.lpszClassName = WND_CLASS;
-    /* 使用系统默认图标，后续可替换为自定义 .ico */
-    wc.hIcon = LoadIconW(NULL, IDI_APPLICATION);
+    /* 使用自定义应用图标（从 resource.rc 中嵌入的 icon.ico 加载） */
+    wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_APPICON));
     RegisterClassExW(&wc);
 
     /* 4. 创建隐藏窗口（仅用于接收消息，不可见） */
@@ -218,7 +218,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int) {
     }
 
     /* 8. 创建托盘图标 */
-    HICON hIcon = LoadIconW(NULL, IDI_APPLICATION);
+    /* 加载自定义图标用于系统托盘，16x16 尺寸以获得最佳显示效果 */
+    HICON hIcon = (HICON)LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_APPICON),
+                                     IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+    if (!hIcon) hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_APPICON));
     Tray_Create(g_hwnd, hIcon);
 
     /* 首次启动时显示气泡通知 */
