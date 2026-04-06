@@ -1,0 +1,12 @@
+{
+    "_comment": "Clicound 鼠标点击音效配置文件。路径相对于本文件所在目录，也支持绝对路径。",
+
+    "left_click": "sounds/left_click.wav",
+    "middle_click": "sounds/middle_click.wav",
+    "right_click": "sounds/right_click.wav",
+
+    "volume": 0.7,
+
+    "audio_buffer_size": 512,
+    "sample_rate": 44100
+}
