@@ -53,4 +53,11 @@ if __name__ == "__main__":
     generate_click_wav("sounds/middle_click.wav", freq=1200, duration_ms=20, volume=0.30)
     # 右键：1400Hz，18ms，与左键区分
     generate_click_wav("sounds/right_click.wav",  freq=1400, duration_ms=18, volume=0.32)
-    print("\n默认音效文件已全部生成到 sounds/ 目录。")
+
+    # 滚轮向上：3200Hz，6ms，极短促高频"嘀"声，模拟棘轮齿轮咬合
+    # 音量刻意压低（0.15），衰减加倍（600），防止连续滚动时变成蜂鸣噪音
+    generate_click_wav("sounds/scroll_up.wav",    freq=3200, duration_ms=6,  volume=0.15)
+    # 滚轮向下：2800Hz，6ms，比向上略低，提供潜意识方向感
+    generate_click_wav("sounds/scroll_down.wav",  freq=2800, duration_ms=6,  volume=0.15)
+
+    print("\n默认音效文件已全部生成到 sounds/ 目录（含滚轮音效）。")

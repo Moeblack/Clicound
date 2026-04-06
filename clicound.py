@@ -5,7 +5,7 @@
 """
 Clicound - 鼠标点击音效反馈工具
 ====================================
-为 Windows 触摸板/鼠标的左键、中键、右键点击添加即时音效反馈。
+为 Windows 触摸板/鼠标的左键、中键、右键点击和滚轮滚动添加即时音效反馈。
 
 技术方案：
 - 全局鼠标钩子：pynput （封装了 Win32 WH_MOUSE_LL 低级钩子）
@@ -20,7 +20,7 @@ Clicound - 鼠标点击音效反馈工具
 import json
 import os
 import sys
-import threading
+import time
 from pathlib import Path
 
 # ============================================================
@@ -40,6 +40,10 @@ def load_config() -> dict:
         "left_click": "sounds/left_click.wav",
         "middle_click": "sounds/middle_click.wav",
         "right_click": "sounds/right_click.wav",
+        "scroll_up": "sounds/scroll_up.wav",
+        "scroll_down": "sounds/scroll_down.wav",
+        "scroll_throttle_ms": 25,        # 滚轮音效最小播放间隔（毫秒）
+        "scroll_delta_threshold": 60,    # 滚轮累积增量达到此值才播放一次音效
         "volume": 0.7,
         "audio_buffer_size": 512,   # 越小延迟越低，但太小可能爆音
         "sample_rate": 44100,
@@ -65,7 +69,7 @@ def load_config() -> dict:
 def init_audio(config: dict):
     """
     初始化 pygame.mixer，预加载所有音效文件。
-    返回一个字典 {"left": Sound, "middle": Sound, "right": Sound}
+    返回一个字典 {"left": Sound, "middle": Sound, "right": Sound, "scroll_up": Sound, "scroll_down": Sound}
     """
     import pygame.mixer as mixer
 
@@ -90,6 +94,8 @@ def init_audio(config: dict):
         "left_click": "left",
         "middle_click": "middle",
         "right_click": "right",
+        "scroll_up": "scroll_up",
+        "scroll_down": "scroll_down",
     }
     for cfg_key, internal_key in key_map.items():
         wav_path = config.get(cfg_key, "")
@@ -122,27 +128,36 @@ def init_audio(config: dict):
 
 
 # ============================================================
-# 全局鼠标钩子：用 pynput 监听点击事件
+# 全局鼠标钩子：用 pynput 监听点击和滚轮事件
 # ============================================================
 
-def start_mouse_listener(sounds: dict):
+def start_mouse_listener(sounds: dict, config: dict):
     """
     启动全局鼠标监听。
     pynput 在 Windows 上使用 WH_MOUSE_LL 低级钩子，
-    可以捕获所有窗口/桌面上的鼠标事件。
+    可以捕获所有窗口/桌面上的鼠标点击和滚轮事件。
     """
     from pynput.mouse import Listener, Button
+
+    # ---- 滚轮节流状态 ----
+    # 用列表包装 mutable 状态，避免 nonlocal 在嵌套函数中的兼容性问题
+    scroll_state = {
+        "accumulated_delta": 0,       # 累积的滚轮增量
+        "last_sound_time": 0.0,       # 上次播放滚轮音效的时间戳（秒）
+    }
+    # 从配置读取节流参数
+    throttle_sec = config.get("scroll_throttle_ms", 25) / 1000.0
+    delta_threshold = config.get("scroll_delta_threshold", 60)
 
     def on_click(x, y, button, pressed):
         """
         鼠标点击回调。
         pressed=True 表示按下，False 表示释放。
-        我们只在按下时发声，模拟物理按键的即时触感反馈。
+        只在按下时发声，模拟物理按键的即时触感反馈。
         """
         if not pressed:
-            return  # 只处理按下事件
+            return
 
-        # 根据按钮类型选择音效
         if button == Button.left:
             snd = sounds.get("left")
         elif button == Button.middle:
@@ -150,15 +165,38 @@ def start_mouse_listener(sounds: dict):
         elif button == Button.right:
             snd = sounds.get("right")
         else:
-            snd = None  # 侧键等其他按钮，暂不处理
+            snd = None
 
         if snd:
-            # 在空闲通道上播放，允许多次点击音重叠
             snd.play()
 
-    # 创建并启动监听器
-    # pynput.mouse.Listener 会在单独的线程中运行消息循环
-    listener = Listener(on_click=on_click)
+    def on_scroll(x, y, dx, dy):
+        """
+        滚轮回调。
+        dy>0 表示向上滚动，dy<0 表示向下滚动。
+        使用"累积增量 + 最小间隔"双重门控做节流：
+        - 累积增量达到阈值才播放一次（避免精密触摸板小增量时过于密集）
+        - 两次播放之间至少间隔 throttle_ms（限制最大频率约 40 次/秒）
+        """
+        # pynput 的 dy 已经是归一化的方向值（通常为 ±1），
+        # 但在不同系统/驱动下可能有不同的值。
+        # 我们把 dy 乘以 WHEEL_DELTA(120) 来对齐 Win32 原始行为
+        scroll_state["accumulated_delta"] += dy * 120
+
+        now = time.perf_counter()
+        delta = scroll_state["accumulated_delta"]
+
+        if abs(delta) >= delta_threshold and (now - scroll_state["last_sound_time"]) >= throttle_sec:
+            if delta > 0:
+                snd = sounds.get("scroll_up")
+            else:
+                snd = sounds.get("scroll_down")
+            if snd:
+                snd.play()
+            scroll_state["accumulated_delta"] = 0
+            scroll_state["last_sound_time"] = now
+
+    listener = Listener(on_click=on_click, on_scroll=on_scroll)
     listener.start()
     return listener
 
@@ -169,7 +207,7 @@ def start_mouse_listener(sounds: dict):
 
 def main():
     print("="*50)
-    print("  Clicound - 鼠标点击音效反馈")
+    print("  Clicound - 鼠标点击/滚轮音效反馈")
     print("  按 Ctrl+C 退出")
     print("="*50)
     print()
@@ -181,10 +219,10 @@ def main():
     sounds = init_audio(config)
 
     # 3. 启动全局鼠标监听
-    listener = start_mouse_listener(sounds)
+    listener = start_mouse_listener(sounds, config)
 
     print()
-    print("✅ 已启动！现在每次鼠标点击都会发出音效。")
+    print("✅ 已启动！现在每次鼠标点击和滚轮滚动都会发出音效。")
     print("💡 修改 config.json 可自定义音效文件和音量。")
     print()
 

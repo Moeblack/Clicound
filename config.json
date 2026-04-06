@@ -4,9 +4,14 @@
     "left_click": "sounds/left_click.wav",
     "middle_click": "sounds/middle_click.wav",
     "right_click": "sounds/right_click.wav",
+    "scroll_up": "sounds/scroll_up.wav",
+    "scroll_down": "sounds/scroll_down.wav",
 
     "volume": 0.7,
 
     "audio_buffer_size": 512,
-    "sample_rate": 44100
+    "sample_rate": 44100,
+
+    "scroll_throttle_ms": 25,
+    "scroll_delta_threshold": 60
 }
