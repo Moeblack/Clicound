@@ -1,0 +1,59 @@
+#include <windows.h>
+#include "resource.h"
+
+/* RC 编译器无法解析 commctrl.h，手动定义所需的样式常量 */
+#ifndef TBS_AUTOTICKS
+#define TBS_AUTOTICKS 0x0001
+#endif
+#ifndef WS_TABSTOP
+#define WS_TABSTOP 0x00010000L
+#endif
+
+1 RT_MANIFEST "app.manifest"
+
+IDD_SETTINGS DIALOGEX 0, 0, 340, 270
+STYLE DS_SHELLFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Clicound"
+FONT 9, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Click sounds", -1, 7, 7, 326, 72
+    LTEXT           "Left:", -1, 14, 22, 24, 8
+    EDITTEXT        IDC_EDIT_LEFT, 40, 20, 230, 12, ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse", IDC_BTN_LEFT, 275, 19, 50, 14
+    LTEXT           "Middle:", -1, 14, 38, 28, 8
+    EDITTEXT        IDC_EDIT_MIDDLE, 40, 36, 230, 12, ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse", IDC_BTN_MIDDLE, 275, 35, 50, 14
+    LTEXT           "Right:", -1, 14, 54, 24, 8
+    EDITTEXT        IDC_EDIT_RIGHT, 40, 52, 230, 12, ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse", IDC_BTN_RIGHT, 275, 51, 50, 14
+
+    GROUPBOX        "Scroll sounds", -1, 7, 83, 326, 52
+    LTEXT           "Up:", -1, 14, 98, 16, 8
+    EDITTEXT        IDC_EDIT_SCROLLUP, 40, 96, 230, 12, ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse", IDC_BTN_SCROLLUP, 275, 95, 50, 14
+    LTEXT           "Down:", -1, 14, 114, 24, 8
+    EDITTEXT        IDC_EDIT_SCROLLDOWN, 40, 112, 230, 12, ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Browse", IDC_BTN_SCROLLDOWN, 275, 111, 50, 14
+
+    LTEXT           "Enable:", -1, 7, 145, 28, 8
+    AUTOCHECKBOX    "Left", IDC_CHK_LEFT, 38, 144, 32, 10
+    AUTOCHECKBOX    "Middle", IDC_CHK_MIDDLE, 76, 144, 38, 10
+    AUTOCHECKBOX    "Right", IDC_CHK_RIGHT, 120, 144, 34, 10
+    AUTOCHECKBOX    "Scroll", IDC_CHK_SCROLL, 160, 144, 38, 10
+
+    LTEXT           "Volume:", -1, 7, 168, 30, 8
+    CONTROL         "", IDC_SLIDER_VOLUME, "msctls_trackbar32", TBS_AUTOTICKS | WS_TABSTOP, 40, 165, 192, 16
+    LTEXT           "70%", IDC_LABEL_VOLUME, 238, 168, 28, 8
+    PUSHBUTTON      "Preview", IDC_BTN_PREVIEW, 272, 165, 55, 16
+
+    LTEXT           "Scroll sensitivity:", -1, 7, 192, 66, 8
+    CONTROL         "", IDC_SLIDER_SENSITIVITY, "msctls_trackbar32", TBS_AUTOTICKS | WS_TABSTOP, 76, 189, 192, 16
+    LTEXT           "Low=less, High=more", IDC_LABEL_SENSITIVITY, 273, 192, 60, 16
+
+    LTEXT           "Trigger:", -1, 7, 218, 32, 8
+    AUTORADIOBUTTON "On press", IDC_RADIO_PRESS, 42, 217, 56, 10, WS_GROUP
+    AUTORADIOBUTTON "On release", IDC_RADIO_RELEASE, 106, 217, 60, 10
+
+    DEFPUSHBUTTON   "OK", IDOK, 220, 248, 55, 16
+    PUSHBUTTON      "Cancel", IDCANCEL, 280, 248, 55, 16
+END

@@ -19,8 +19,10 @@ Clicound - 鼠标点击音效反馈工具
 
 import json
 import os
+import signal
 import sys
 import time
+import atexit
 from pathlib import Path
 
 # ============================================================
@@ -226,14 +228,41 @@ def main():
     print("💡 修改 config.json 可自定义音效文件和音量。")
     print()
 
-    # 4. 保持主线程存活，等待 Ctrl+C
+    # 4. 注册清理函数，确保终端被关闭、进程被杀死等任何退出方式都能卸载钩子
+    #    问题背景：pynput.Listener 在后台线程跑 Win32 消息循环和 WH_MOUSE_LL 钩子，
+    #    如果不显式 stop()，关闭终端窗口时钩子可能残留，进程变成无窗口后台僵尸。
+    def cleanup():
+        """统一清理：停止监听器 + 关闭音频引擎"""
+        try:
+            listener.stop()
+        except Exception:
+            pass
+        try:
+            import pygame.mixer as mixer
+            mixer.quit()
+        except Exception:
+            pass
+
+    atexit.register(cleanup)
+
+    # 处理 SIGTERM（kill 命令）和 SIGINT（Ctrl+C），
+    # 以及 Windows 特有的 CTRL_CLOSE_EVENT（关闭终端窗口）、CTRL_BREAK_EVENT
+    def signal_handler(signum, frame):
+        """收到终止信号时主动退出，触发 atexit 清理"""
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    # Windows 下 SIGBREAK 对应终端关闭/Ctrl+Break
+    if hasattr(signal, "SIGBREAK"):
+        signal.signal(signal.SIGBREAK, signal_handler)
+
+    # 5. 保持主线程存活
     try:
-        listener.join()  # 阻塞主线程直到监听器停止
-    except KeyboardInterrupt:
+        listener.join()
+    except (KeyboardInterrupt, SystemExit):
         print("\n正在退出...")
-        listener.stop()
-        import pygame.mixer as mixer
-        mixer.quit()
+        cleanup()
         print("已关闭。再见！")
 
 

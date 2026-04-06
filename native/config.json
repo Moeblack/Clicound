@@ -1,0 +1,15 @@
+{
+    "left_click": "sounds/left_click.wav",
+    "middle_click": "sounds/middle_click.wav",
+    "right_click": "sounds/right_click.wav",
+    "scroll_up": "sounds/scroll_up.wav",
+    "scroll_down": "sounds/scroll_down.wav",
+    "volume": 70,
+    "enable_left": true,
+    "enable_middle": true,
+    "enable_right": true,
+    "enable_scroll": true,
+    "scroll_sensitivity": 60,
+    "scroll_throttle_ms": 25,
+    "trigger_on_press": true
+}
