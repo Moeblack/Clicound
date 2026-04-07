@@ -113,3 +113,11 @@ Clicound/
 ## 许可
 
 [GPL-3.0](LICENSE)
+
+## 社区支持
+
+[LINUX DO](https://linux.do/)
+
+## 开发工具
+
+[Limcode](https://github.com/Lianues/Lim-Code)
